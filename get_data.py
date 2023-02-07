@@ -6,17 +6,13 @@ import numpy
 from psycopg2.extensions import register_adapter, AsIs
 psycopg2.extensions.register_adapter(numpy.int64, psycopg2._psycopg.AsIs)
 
-### YOUR DB CREDENTIALS & STOCK PARAMETERS:
+### YOUR DB CREDENTIALS
 ### Replace these with your own values
 db_user = "deqtyrhl"
 db_password = "BPKGBAHWah2a6PczLbAn6eauEPz1Nxkp"
 db_host="manny.db.elephantsql.com"
 db_port="5432"
 db_database="deqtyrhl"
-db_table_name = "apple_stock"
-ticker = "AAPL"
-start_date = "2021-8-1"
-end_date = "2021-9-1"
 
 ### REUSABLE DB CONNECTOR
 def connect_to_my_db():
@@ -27,7 +23,7 @@ def connect_to_my_db():
                             database=db_database)
 
 ### FETCH STOCK DATA
-def fetch_data():
+def fetch_stock_data(ticker, start_date, end_date):
     stock_data = yfinance.download(ticker, start=start_date, end=end_date)
     # Bee Guan Teo's use of numpy.datetime_as_string did not work for me
     # so I elected to simply convert the Date values to string
@@ -38,7 +34,7 @@ def fetch_data():
     return records
 
 ### CREATE TABLE IN POSTGRESQL
-def create_table():
+def create_stock_table(db_table_name):
     conn = connect_to_my_db()
     conn.autocommit = True
     cur = conn.cursor()
@@ -57,19 +53,19 @@ def create_table():
     conn.close()
 
 ### INSERT DATA INTO THE POSTGRESQL TABLE
-def insert_data(records):
+def insert_stock_data(data, db_table_name):
     conn = connect_to_my_db()
     conn.autocommit = True
     cur = conn.cursor()
     query = '''INSERT INTO {} (Date, Open, High, Low, Close, Adj_Close, Volume, Ticker)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'''.format(db_table_name)
     cur = conn.cursor()
-    cur.executemany(query, records)
+    cur.executemany(query, data)
     conn.close()
     print("Data inserted successfully")
 
-### QUERY DATA FROM THE POSTGRESQL TABLE TO CHECK IF IT WORKED
-def query_data():
+### QUERY SOME RECORDS FROM THE POSTGRESQL TABLE TO CONFIRM IT WORKED
+def query_data(db_table_name):
     conn = connect_to_my_db()
     conn.autocommit = True
     cur = conn.cursor()
@@ -83,7 +79,8 @@ def query_data():
 
 ##### EXECUTE #####
 
-create_table()
-records = fetch_data()
-insert_data(records)
-query_data()
+table = "apple_stock"
+appl_stock = fetch_stock_data(ticker = "AAPL", start_date = "2021-8-1", end_date = "2021-9-1")
+create_stock_table(db_table_name = table)
+insert_stock_data(data = appl_stock, db_table_name = table)
+query_data(db_table_name = table)
