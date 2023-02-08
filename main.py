@@ -33,6 +33,12 @@ insert_data(
     your_query = '''INSERT INTO {} (Stock, Ticker, Date_of_purchase, Quantity)
     VALUES (%s, %s, %s, %s)'''.format(assets_table_name))
 print("Sample data from the 'assets' table:")
+# query_data(
+#     db_credentials = db_credentials, 
+#     your_query = '''SELECT column_name, data_type
+#         FROM information_schema.columns
+#         WHERE table_name = {}'''.format(assets_table_name)
+# )
 query_data(
     db_credentials = db_credentials, 
     your_query = "SELECT * from {} LIMIT 5".format(assets_table_name))
